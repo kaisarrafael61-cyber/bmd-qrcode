@@ -95,14 +95,38 @@ class KirController extends Controller
         return redirect()->back()->with('success', 'Data Excel KIR berhasil di-import!');
     }
 
-    // Menampilkan / Stream PDF otomatis dari data database hasil import Excel
-    public function streamPdf($ruangan)
+    // Stream/Pratinjau PDF di browser (bisa berdasarkan ruangan atau cetak semua)
+    public function streamPdf($ruangan = null)
     {
-        $data_aset = Kir::where('ruangan', $ruangan)->get();
+        // Jika ada parameter ruangan, filter berdasar ruangan. Jika tidak, ambil semua data.
+        if ($ruangan) {
+            $kirs = Kir::where('ruangan', $ruangan)->get();
+            $fileName = "KIR-$ruangan.pdf";
+        } else {
+            $kirs = Kir::all();
+            $fileName = "KIR-Semua-Ruangan.pdf";
+        }
 
-        $pdf = Pdf::loadView('kir.pdf', compact('data_aset', 'ruangan'))
+        $pdf = Pdf::loadView('kir.pdf', compact('kirs', 'ruangan'))
                   ->setPaper('a4', 'landscape');
 
-        return $pdf->stream("KIR-$ruangan.pdf");
+        return $pdf->stream($fileName);
+    }
+
+    // Langsung Mengunduh / Download File PDF KIR + QR Code
+    public function exportPdf($ruangan = null)
+    {
+        if ($ruangan) {
+            $kirs = Kir::where('ruangan', $ruangan)->get();
+            $fileName = "KIR-$ruangan.pdf";
+        } else {
+            $kirs = Kir::all();
+            $fileName = "KIR-Semua-Ruangan.pdf";
+        }
+
+        $pdf = Pdf::loadView('kir.pdf', compact('kirs', 'ruangan'))
+                  ->setPaper('a4', 'landscape');
+
+        return $pdf->download($fileName);
     }
 }

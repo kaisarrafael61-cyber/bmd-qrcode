@@ -1,8 +1,13 @@
-@extends('layouts.app') {{-- Sesuaikan dengan nama layout utama Anda --}}
+@extends('layouts.app') {{-- Sesuaikan dengan nama file layout utama proyek Anda --}}
 
 @section('content')
 <div class="container py-4">
-    <h2 class="mb-4">Manajemen Document KIR & QR Code</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Manajemen Kartu Inventaris Ruangan (KIR)</h2>
+        <a href="{{ route('kir.export-pdf', 'Sekretariat') }}" class="btn btn-danger" target="_blank">
+            <i class="bi bi-file-earmark-pdf"></i> Download PDF Inventaris
+        </a>
+    </div>
 
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -11,90 +16,86 @@
         </div>
     @endif
 
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     <div class="row">
-        <!-- 1. Form Import Data Excel (Sekretariat.xlsx) -->
-        <div class="col-md-6 mb-4">
-            <div class="card h-100 border-success shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">Import Data Barang Excel</h5>
+        <!-- Panel Kiri: Form Upload File Excel KIR -->
+        <div class="col-md-7 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Import Data Inventaris Excel</h5>
                 </div>
                 <div class="card-body">
+                    <p class="text-muted">Unggah file Excel (seperti <code>Sekretariat.xlsx</code>) untuk memasukkan atau memperbarui data barang inventaris ruangan ke database.</p>
+                    
                     <form action="{{ route('kir.import') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="mb-3">
-                            <label for="excel_file" class="form-label">Pilih File Excel Inventaris (.xlsx / .xls)</label>
-                            <input type="file" name="file" id="excel_file" class="form-control" accept=".xlsx, .xls, .csv" required>
-                            <small class="text-muted">Upload file seperti Sekretariat.xlsx untuk dimasukkan ke database.</small>
+                            <label for="file" class="form-label">Pilih File Excel (.xlsx / .xls / .csv)</label>
+                            <input type="file" name="file" id="file" class="form-control" required accept=".xlsx, .xls, .csv">
                         </div>
-                        <button type="submit" class="btn btn-success">Import Excel ke Database</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-upload"></i> Unggah File Excel
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- 2. Form Upload PDF KIR Manual -->
-        <div class="col-md-6 mb-4">
-            <div class="card h-100 border-primary shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="card-title mb-0">Upload File PDF KIR (Ber-TTD)</h5>
-                </div>
+        <!-- Panel Kanan: Kartu QR Code Utama Ruangan (Siap Cetak & Ditempel di Pintu/Dinding) -->
+        <div class="col-md-5 mb-4">
+            <div class="card shadow-sm text-center p-3 border-primary">
                 <div class="card-body">
-                    <form action="{{ route('kir.store') }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <div class="mb-3">
-                            <label for="title" class="form-label">Judul / Nama Ruangan KIR</label>
-                            <input type="text" name="title" id="title" class="form-control" placeholder="Contoh: KIR Ruang Rapat Kominfo" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="pdf_file" class="form-label">Pilih File PDF KIR</label>
-                            <input type="file" name="pdf_file" id="pdf_file" class="form-control" accept="application/pdf" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Unggah PDF & Generate QR Code</button>
-                    </form>
+                    <h5 class="card-title text-uppercase fw-bold mb-1">KIR - RUANG SEKRETARIAT</h5>
+                    <p class="text-muted small mb-3">Scan QR Code di bawah untuk melihat PDF Daftar Barang</p>
+                    
+                    <!-- QR Code Otomatis Mengarah ke Route Stream PDF -->
+                    <div class="p-3 bg-light d-inline-block rounded border mb-3">
+                        {!! QrCode::format('svg')->size(180)->margin(1)->generate(route('kir.pdf', 'Sekretariat')) !!}
+                    </div>
+
+                    <div>
+                        <a href="{{ route('kir.stream-pdf', 'Sekretariat') }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> Pratinjau Tampilan PDF
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 3. Tabel Daftar Dokumen KIR Manual -->
-    <div class="card shadow-sm">
+    <!-- Tabel Pratinjau Data Barang di Sistem -->
+    <div class="card shadow-sm mt-2">
         <div class="card-header bg-light">
-            <h5 class="card-title mb-0">Daftar Dokumen KIR Manual</h5>
+            <h5 class="card-title mb-0">Daftar Barang Ruang Sekretariat</h5>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-striped table-hover mb-0">
-                    <thead>
+                    <thead class="table-dark">
                         <tr>
-                            <th>#</th>
-                            <th>Judul Ruangan</th>
-                            <th>Nama File</th>
-                            <th>Tanggal Unggah</th>
-                            <th>Aksi</th>
+                            <th>No</th>
+                            <th>Kode Barang</th>
+                            <th>Jenis / Nama Barang</th>
+                            <th>Merk / Model</th>
+                            <th>No. Seri</th>
+                            <th>Bahan</th>
+                            <th>Tahun</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($kirList as $index => $kir)
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $kir->title }}</td>
-                                <td>{{ $kir->file_name }}</td>
-                                <td>{{ $kir->created_at->format('d M Y H:i') }}</td>
-                                <td>
-                                    <a href="{{ route('kir.show', $kir->id) }}" class="btn btn-sm btn-info text-white">Lihat QR Code</a>
-                                </td>
-                            </tr>
+                        @forelse($kirs as $index => $item)
+                        <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td><code>{{ $item->no_kode_barang ?? '-' }}</code></td>
+                            <td>{{ $item->jenis_barang ?? '-' }}</td>
+                            <td>{{ $item->merk_model ?? '-' }}</td>
+                            <td>{{ $item->no_seri ?? '-' }}</td>
+                            <td>{{ $item->bahan ?? '-' }}</td>
+                            <td>{{ $item->tahun_pembuatan ?? '-' }}</td>
+                        </tr>
                         @empty
-                            <tr>
-                                <td colspan="5" class="text-center py-3">Belum ada file KIR yang diunggah.</td>
-                            </tr>
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">Belum ada data barang. Silakan unggah file Excel terlebih dahulu.</td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>

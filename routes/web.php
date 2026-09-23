@@ -50,5 +50,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Route Baru: Import File Excel KIR (Sekretariat.xlsx)
     Route::post('/kir/import', [KirController::class, 'import'])->name('kir.import');
 
+    // Route Baru: Stream Preview PDF dari Database
+    Route::get('/kir/stream-pdf/{ruangan?}', [KirController::class, 'streamPdf'])->name('kir.stream-pdf');
+
+    // Route Baru: Export / Download PDF dari Database
+    Route::get('/kir/export-pdf/{ruangan?}', [KirController::class, 'exportPdf'])->name('kir.export-pdf');
+
     Route::get('/kir/{id}', [KirController::class, 'show'])->name('kir.show');
 });
